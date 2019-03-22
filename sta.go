@@ -4,6 +4,8 @@
 
 package unifi
 
+import "strings"
+
 type StaMap map[string]Sta
 
 // Station data
@@ -78,33 +80,55 @@ func (s Sta) Block() error {
 	if s.u == nil {
 		return ErrLoginFirst
 	}
-	return s.u.stacmd(s.Mac, "block-sta")
+	return s.u.stacmd(command{Mac: s.Mac, Cmd: "block-sta"})
 }
 
 func (s Sta) UnBlock() error {
 	if s.u == nil {
 		return ErrLoginFirst
 	}
-	return s.u.stacmd(s.Mac, "unblock-sta")
+	return s.u.stacmd(command{Mac: s.Mac, Cmd: "unblock-sta"})
 }
 
 func (s Sta) Disconnect() error {
 	if s.u == nil {
 		return ErrLoginFirst
 	}
-	return s.u.stacmd(s.Mac, "kick-sta")
+	return s.u.stacmd(command{Mac: s.Mac, Cmd: "kick-sta"})
 }
 
-func (s Sta) AuthorizeGuest(minutes int) error {
+func (s Sta) AuthorizeGuest(minutes, down, up, mbytes *int64, apMac *string) error {
 	if s.u == nil {
 		return ErrLoginFirst
 	}
-	return s.u.stacmd(s.Mac, "authorize-guest", minutes)
+
+	// Prepare command
+	cmd := command{Mac: s.Mac, Cmd: "authorize-guest"}
+
+	if minutes != nil {
+		cmd.Minutes = *minutes
+		cmd.Minutes = *minutes
+	}
+	if down != nil {
+		cmd.Down = *down
+	}
+	if up != nil {
+		cmd.Up = *up
+
+	}
+	if mbytes != nil {
+		cmd.MBytes = *mbytes
+	}
+	if apMac != nil {
+		cmd.ApMac = strings.ToLower(*apMac)
+	}
+
+	return s.u.stacmd(cmd)
 }
 
 func (s Sta) UnauthorizeGuest() error {
 	if s.u == nil {
 		return ErrLoginFirst
 	}
-	return s.u.stacmd(s.Mac, "unauthorize-guest")
+	return s.u.stacmd(command{Mac: s.Mac, Cmd: "unauthorize-guest"})
 }

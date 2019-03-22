@@ -23,10 +23,19 @@ type User struct {
 	Oui       string
 }
 
+// Request structs
 type NewUser struct {
 	UserGroupID string `json:"usergroup_id"`
 	Mac         string `json:"mac"`
 	Name        string `json:"name"`
+}
+
+type Data struct {
+	Data NewUser `json:"data"`
+}
+
+type Objects struct {
+	Objects []Data `json:"objects"`
 }
 
 //Value with parameters for create New User
@@ -43,15 +52,10 @@ func (u *Unifi) NewUser(site *Site, nu NewUser) ([]User, error) {
 	Nu = nu
 	err := u.parseNewUser(site, "group/user", &response)
 	return response.Data, err
-
 }
 
 func (u *Unifi) apicmdNewUser(site *Site, cmd string) ([]byte, error) {
-	jsonData := map[string]map[string][]NewUser{
-		"objects": {
-			"data": []NewUser{Nu},
-		},
-	}
+	jsonData := Objects{[]Data{{Nu}}}
 
 	// Setup url
 	cmdurl := u.apiURL

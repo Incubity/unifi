@@ -170,19 +170,19 @@ func (u *Unifi) apicmdPut(site *Site, cmd string, data interface{}) error {
 type command struct {
 	Mac     string `json:"mac"`
 	Cmd     string `json:"cmd"`
-	Minutes int    `json:"minutes,omitempty"`
+	Up      int64  `json:"up,omitempty"`
+	Down    int64  `json:"down,omitempty"`
+	Minutes int64  `json:"minutes,omitempty"`
+	MBytes  int64  `json:"bytes,omitempty"`
+	ApMac   string `json:"ap_mac,omitempty"`
 }
 
 func (u *Unifi) devcmd(mac, cmd string) error {
 	return u.maccmd("devmgr", command{Mac: mac, Cmd: cmd})
 }
 
-func (u *Unifi) stacmd(mac, cmd string, min ...int) error {
-	minutes := 0
-	if len(min) > 0 {
-		minutes = min[0]
-	}
-	return u.maccmd("stamgr", command{Mac: mac, Cmd: cmd, Minutes: minutes})
+func (u *Unifi) stacmd(command command) error {
+	return u.maccmd("stamgr", command)
 }
 
 func (u *Unifi) maccmd(mgr string, args interface{}) error {
