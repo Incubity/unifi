@@ -4,7 +4,16 @@
 
 package unifi
 
-import "strings"
+import (
+	"encoding/json"
+	"strings"
+)
+
+// Response[]UAP from controller
+var response struct {
+	Data []json.RawMessage
+	Meta meta
+}
 
 type StaMap map[string]Sta
 
@@ -76,59 +85,58 @@ func (s Sta) Name() string {
 	return s.Mac
 }
 
-func (s Sta) Block() error {
+func (s Sta) Block(site *Site) error {
 	if s.u == nil {
 		return ErrLoginFirst
 	}
-	return s.u.stacmd(command{Mac: s.Mac, Cmd: "block-sta"})
+	return s.u.parse(site, "block-sta", command{Mac: s.Mac}, &response)
 }
 
-func (s Sta) UnBlock() error {
+func (s Sta) UnBlock(site *Site) error {
 	if s.u == nil {
 		return ErrLoginFirst
 	}
-	return s.u.stacmd(command{Mac: s.Mac, Cmd: "unblock-sta"})
+	return s.u.parse(site, "unblock-sta", command{Mac: s.Mac}, &response)
 }
 
-func (s Sta) Disconnect() error {
+func (s Sta) Disconnect(site *Site) error {
 	if s.u == nil {
 		return ErrLoginFirst
 	}
-	return s.u.stacmd(command{Mac: s.Mac, Cmd: "kick-sta"})
+	return s.u.parse(site, "kick-sta", command{Mac: s.Mac}, &response)
 }
 
-func (s Sta) AuthorizeGuest(minutes, down, up, mbytes *int64, apMac *string) error {
+func (s Sta) AuthorizeGuest(site *Site, minutes, down, up, mbytes *int64, apMac *string) error {
 	if s.u == nil {
 		return ErrLoginFirst
 	}
 
 	// Prepare command
-	cmd := command{Mac: s.Mac, Cmd: "authorize-guest"}
+	payload := command{Mac: s.Mac}
 
 	if minutes != nil {
-		cmd.Minutes = *minutes
-		cmd.Minutes = *minutes
+		payload.Minutes = *minutes
 	}
 	if down != nil {
-		cmd.Down = *down
+		payload.Down = *down
 	}
 	if up != nil {
-		cmd.Up = *up
+		payload.Up = *up
 
 	}
 	if mbytes != nil {
-		cmd.MBytes = *mbytes
+		payload.MBytes = *mbytes
 	}
 	if apMac != nil {
-		cmd.ApMac = strings.ToLower(*apMac)
+		payload.ApMac = strings.ToLower(*apMac)
 	}
 
-	return s.u.stacmd(cmd)
+	return s.u.parse(site, "authorize-guest", payload, &response)
 }
 
-func (s Sta) UnauthorizeGuest() error {
+func (s Sta) UnauthorizeGuest(site *Site) error {
 	if s.u == nil {
 		return ErrLoginFirst
 	}
-	return s.u.stacmd(command{Mac: s.Mac, Cmd: "unauthorize-guest"})
+	return s.u.parse(site, "unauthorize-guest", command{Mac: s.Mac}, &response)
 }
