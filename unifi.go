@@ -170,28 +170,71 @@ func (u *Unifi) apicmdPut(site *Site, cmd string, data interface{}) error {
 type command struct {
 	Mac     string `json:"mac"`
 	Cmd     string `json:"cmd"`
-	Up      int64  `json:"up,omitempty"`
-	Down    int64  `json:"down,omitempty"`
-	Minutes int64  `json:"minutes,omitempty"`
-	MBytes  int64  `json:"bytes,omitempty"`
+	Up      int    `json:"up,omitempty"`
+	Down    int    `json:"down,omitempty"`
+	Minutes int    `json:"minutes,omitempty"`
+	MBytes  int    `json:"bytes,omitempty"`
 	ApMac   string `json:"ap_mac,omitempty"`
 }
 
+type Params struct {
+	Up      *int    `json:"up,omitempty"`
+	Down    *int    `json:"down,omitempty"`
+	Minutes *int    `json:"minutes,omitempty"`
+	MBytes  *int    `json:"bytes,omitempty"`
+	ApMac   *string `json:"ap_mac,omitempty"`
+}
+
 func (u *Unifi) devcmd(mac, cmd string) error {
-	return u.maccmd("devmgr", command{Mac: mac, Cmd: cmd})
+	return u.maccmd(nil, "devmgr", command{Mac: mac, Cmd: cmd})
 }
 
-func (u *Unifi) stacmd(command command) error {
-	return u.maccmd("stamgr", command)
+func (u *Unifi) stacmd(site *Site, mac, cmd string, params Params) error {
+	cmdParams := command{Mac: mac, Cmd: cmd}
+
+	if params.Minutes != nil {
+		cmdParams.Minutes = *params.Minutes
+	} else {
+		cmdParams.Minutes = 0
+	}
+
+	if params.Down != nil {
+		cmdParams.Down = *params.Down
+	}
+
+	if params.Up != nil {
+		cmdParams.Up = *params.Up
+	}
+
+	if params.MBytes != nil {
+		cmdParams.MBytes = *params.MBytes
+	}
+
+	if params.ApMac != nil {
+		cmdParams.ApMac = *params.ApMac
+	}
+
+	return u.maccmd(site, "stamgr", cmdParams)
 }
 
-func (u *Unifi) maccmd(mgr string, args interface{}) error {
+func (u *Unifi) maccmd(site *Site, mgr string, args interface{}) error {
 	param, err := json.Marshal(args)
 	if err != nil {
 		return err
 	}
+
+	uri := u.apiURL
+
+	// For site specific command, add site settings
+	if site != nil {
+		uri += fmt.Sprintf("s/%s/", site.Name)
+	}
+
+	// Add the command to the url
+	uri += "cmd/" + mgr
+
 	val := url.Values{"json": {string(param)}}
-	_, err = u.client.PostForm(u.apiURL+"cmd/"+mgr, val)
+	_, err = u.client.PostForm(uri, val)
 	return err
 }
 

@@ -6,7 +6,6 @@ package unifi
 
 import (
 	"encoding/json"
-	"strings"
 )
 
 // Response[]UAP from controller
@@ -89,54 +88,33 @@ func (s Sta) Block(site *Site) error {
 	if s.u == nil {
 		return ErrLoginFirst
 	}
-	return s.u.parse(site, "block-sta", command{Mac: s.Mac}, &response)
+	return s.u.stacmd(site, s.Mac, "block-sta", Params{})
 }
 
 func (s Sta) UnBlock(site *Site) error {
 	if s.u == nil {
 		return ErrLoginFirst
 	}
-	return s.u.parse(site, "unblock-sta", command{Mac: s.Mac}, &response)
+	return s.u.stacmd(site, s.Mac, "unblock-sta", Params{})
 }
 
 func (s Sta) Disconnect(site *Site) error {
 	if s.u == nil {
 		return ErrLoginFirst
 	}
-	return s.u.parse(site, "kick-sta", command{Mac: s.Mac}, &response)
+	return s.u.stacmd(site, s.Mac, "kick-sta", Params{})
 }
 
-func (s Sta) AuthorizeGuest(site *Site, minutes, down, up, mbytes *int64, apMac *string) error {
+func (s Sta) AuthorizeGuest(site *Site, params Params) error {
 	if s.u == nil {
 		return ErrLoginFirst
 	}
-
-	// Prepare command
-	payload := command{Mac: s.Mac}
-
-	if minutes != nil {
-		payload.Minutes = *minutes
-	}
-	if down != nil {
-		payload.Down = *down
-	}
-	if up != nil {
-		payload.Up = *up
-
-	}
-	if mbytes != nil {
-		payload.MBytes = *mbytes
-	}
-	if apMac != nil {
-		payload.ApMac = strings.ToLower(*apMac)
-	}
-
-	return s.u.parse(site, "authorize-guest", payload, &response)
+	return s.u.stacmd(site, s.Mac, "authorize-guest", params)
 }
 
 func (s Sta) UnauthorizeGuest(site *Site) error {
 	if s.u == nil {
 		return ErrLoginFirst
 	}
-	return s.u.parse(site, "unauthorize-guest", command{Mac: s.Mac}, &response)
+	return s.u.stacmd(site, s.Mac, "unauthorize-guest", Params{})
 }
